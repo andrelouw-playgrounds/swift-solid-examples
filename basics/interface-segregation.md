@@ -5,6 +5,7 @@
 - Reduce the side effects and frequency of required changes by splitting the software into multiple, independent parts.
 - Don’t put to  much into an interface, split into seperate interfaces 
 
+## Example
 ```swift
 struct Document {}
 

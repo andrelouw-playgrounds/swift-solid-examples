@@ -1,5 +1,5 @@
 # Dependency Inversion Example
-In the `ModuleGoalWithSubGoalListTableViewCell` the `setUpCell` method was depending on a low level module where it should be depending on a abstraction.
+In the `ModuleGoalWithSubGoalListTableViewCell` the `setUpCell` method was depending on a low level module where it should be depending on an abstraction.
 ### Before
 `ModuleGoalWithSubGoalListTableViewCell.swift`
 ```swift

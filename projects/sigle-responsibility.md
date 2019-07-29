@@ -1,4 +1,4 @@
-# Single responsibility principle
+# Single Responsibility Example
 In one of the projects I needed to do for my goals (Realm data binding) I started of with doing persistence inside of the view controller. Later on I broke out persistence into it’s own class separating persistence from the table view controller. 
 ### Before
 All realm actions were sitting inside `CategoryTableViewController`

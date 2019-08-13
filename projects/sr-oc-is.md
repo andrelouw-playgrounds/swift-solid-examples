@@ -570,4 +570,4 @@ In this example we did the following:
 3. We segregated our interfaces so each implementation is not forced to implement properties it doesn’t care about (`Interface Segregation Principle`)
 4. We also made sure that as new use cases arrive we can extend the view rather than modifying it (`Open closed Principle`)
 
-![alt text]()
+![alt text](Screenshot 2019-08-13 at 21.21.42.png)

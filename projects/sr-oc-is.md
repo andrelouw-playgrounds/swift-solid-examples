@@ -1,13 +1,13 @@
-# Open-closed / Single Responsibility / Interface segregation Example
+# Open-closed / Dependency Inversion / Single Responsibility / Interface Segregation Example
 The `ModuleGoalWithSubGoalListTableViewCell` was built with two purposes in mind, being a goal cell header of some sorts and then catering for a subgoal list.
 you would typically pass in a response and it would figure out what type of subgoal list to show etc. 
 It would use `GoalListCardViewController` to house the subgoal list and then `GoalListContentView` would be the individual list items. 
-A few problems I encountered here was:
+A few problems encountered here was:
 1. `ModuleGoalWithSubGoalListTableViewCell` was trying to do too much, determining a goal header and subgoal list, resulting in multiple responsibilities (breaking single responsiability)
-2. There wasn’t an option to use the subgoal list on it’s own without having to go and create a new cell on its own, i.e. I was forced to deal with the goal header AND the subgoal list.  (Think this can be linked to breaking the Interface Segregation Principle)
-3. When a new sub goal item type was added another check had to be added to the `GoalListContentView` to hide or show labels or buttons depending on the use case. This was starting to get messy. (Breaking the open closed principle as I had to go and modify the `GoalListContentView` class instead of extending it)
+2. There wasn’t an option to use the subgoal list on it’s own without having to go and create a new cell on its own, i.e. one was forced to deal with the goal header AND the subgoal list. With the subgoal list it also forced an interface where all implementations wasn’t always needed (Breaking the Interface Segregation Principle)
+3. When a new sub goal item type was added another check had to be added to the `GoalListContentView` to hide or show labels or buttons depending on the use case. (Breaking the open closed principle because you had to go and modify the `GoalListContentView` class instead of extending it)
 
-### Before:
+### Before code snippets:
 `ModuleGoalWithSubGoalListTableViewCell.swift`
 ```swift
 public class ModuleGoalWithSubGoalListTableViewCell: UITableViewCell {
@@ -272,22 +272,12 @@ internal class GoalListContentView: UIView {
 ```
 
 ### After
-Because there wasn’t an option to use the subgoal list component on it’s own without having to take the goal header, and the use case required the subgoal list on its own, I broke the subgoal list item out in order to try and apply SOLID as far as possible:
-Firstly, to try and stick to single responsibility, each subgoal item will have it’s own model and we will simplify the view to the bear minimum. The view will start off by hiding all labels and the each model will show the labels according to its type. This way we can reuse views that are more or less similar, but as soon a new label or button is introduced we wiil create a new view. In this approach the models and the views are also seperated so we can always swap out the views. 
+#### Single responsibility 
+Starting with the subgoal list we create a new view that only deals with subgoal items that has a title, value and message with the option to tint any label. Any use cases outside of this one, we will create a new view. 
+For now we don’t include a method to setup the view as a whole, but rather setup individual labels. We also hide all labels by default and only show them if we need to, i.e. a text for that label is available. 
 
-The view then becomes:
-`ModuleDetailedSubGoalItemView.swift`
 ```swift
-public struct DetailedSubGoalItem {
-    var title: String? { get }
-    var value: String? { get }
-    var message: String? { get }
-    var tintColour: UIColor? { get }
-}
-
-class ModuleDetailedSubGoalItemView: UIView {
-    private var item = DetailedSubGoalItem()
-
+class ModuleSubGoalItemView: UIView {
     // By default all outlets are set to hidden, have to be explicitly unhide them
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var valueLabel: UILabel!
@@ -298,142 +288,284 @@ class ModuleDetailedSubGoalItemView: UIView {
         backgroundColor = MEMAppearanceHandler.shared().clearColor()
     }
 
-    func setUp(with item: DetailedSubGoalItem) {
-        self.item = item
-        styleLabels()
-        setUpLabel(titleLabel, with: item.title)
-        setUpLabel(valueLabel, with: item.value)
-        setUpLabel(messageLabel, with: item.message)
-    }
-}
-
-private extension ModuleDetailedSubGoalItemView {
-    func styleLabels() {
-        titleLabel.configure(with: MEMAppearanceHandler.shared().blackTextColor(),
-                             font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 17),
-                             numberOfLines: 0)
-        valueLabel.configure(with: item.tintColour ?? MEMAppearanceHandler.shared().blackTextColor(),
-                             font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 20),
-                             numberOfLines: 0)
-        messageLabel.configure(with: MEMAppearanceHandler.shared().charcoalGrayTextColor(),
-                              font: MEMAppearanceHandler.shared().regularFont(withSize: 15),
-                              numberOfLines: 0)
-    }
-
-    func setUpLabel(_ label: UILabel, with text: String?) {
+    func setUpLabel(_ label: UILabel, with text: String?, font: UIFont, tintColor: UIColor? = nil) {
         guard let text = text else { return }
         label.isHidden = false
         label.text = text
+        label.configure(with: tintColor ?? MEMAppearanceHandler.shared().blackTextColor(), font: font, numberOfLines: 0)
     }
 }
 ```
 
-Each goal item type is then defined in an enum with an associated value that is ready to setup the view:
-`SubGoalType.swift`
+In addition we add convenience methods for the default use case:
 ```swift
-public enum SubGoalType {
+// MARK: - Convenience setup for default use case
+extension ModuleSubGoalItemView {
+    func setUpTitleLabel(with text: String) {
+        setUpLabel(titleLabel, with: text, font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 17))
+    }
+
+    func setUpMessageLabel(with text: String) {
+        setUpLabel(messageLabel, with: text, font: MEMAppearanceHandler.shared().regularFont(withSize: 15), tintColor: MEMAppearanceHandler.shared().charcoalGrayTextColor())
+    }
+
+    func setUpValueLabel(with text: String, tintColor: UIColor?) {
+        setUpLabel(valueLabel, with: text, font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 20), tintColor: tintColor)
+    }
+}
+```
+
+#### Dependency Inversion
+Next to create an abstraction between the cell and it’s lower level implementation (the data model) we create a protocol with all the relevant information to set up the view:
+
+```swift
+protocol DetailedSubGoalItem {
+    var title: String? { get }
+    var value: String? { get }
+    var message: String? { get }
+    var tintColour: UIColor? { get }
+}
+```
+
+In the case where we want to create a view that only has a `title`, this protocol will however force us to then implement a `value`, `message` and `tintColour`, which break the `Interface Segregation Principle`. 
+
+One nifty trick to overcome this is to implement protocol extensions that will make all the properties optional, so you only need to implement the ones you want. 
+```swift
+extension DetailedSubGoalItem {
+  var title: String? { return nil}
+  var value: String? { return nil}
+  var message: String? { return nil}
+  var tintColour: UIColor? { return nil}
+}
+```
+
+#### Interface Segregation Principle
+However, if we want to stay true to ISP we should break up these interfaces as follows: 
+
+```swift
+protocol TitleSubGoalItem {
+    var title: String { get }
+}
+
+protocol ValueSubGoalItem {
+    var value: String { get }
+}
+
+protocol MessageSubGoalItem {
+    var message: String { get }
+}
+
+protocol TintableSubGoalItem {
+    var tintColour: UIColor { get }
+}
+```
+
+This way we also don’t need optional properties anymore. 
+
+#### Open closed principle
+To see the open closed principle at play we have the implement some use cases. Let’s start with a detailed view use case. For this use case we want to show all labels (`title`, `message` and `value`) and we want the `value` to be tinted to a specific colour. 
+
+We start off by creating a detailed type abstraction by composing from the options we segregated above. This type will consist of all the types we defined above:
+
+```swift
+protocol TintableDetailedSubGoalItem: TitleSubGoalItem, ValueSubGoalItem, MessageSubGoalItem, TintableSubGoalItem {}
+```
+
+Next we create the low level implementation for this abstraction: 
+
+```swift
+struct DetailedSubGoal: TintableDetailedSubGoalItem {
+	var title: String
+	var value: String
+	var message: String
+	var tintColour: UIColor
+}
+```
+
+Next we create an implementation for our `ModuleSubGoalItemView ` to be able to render this detailed type:
+
+```swift
+extension ModuleSubGoalItemView {
+    func setUp(with item: TintableDetailedSubGoalItem) {
+        setUpTitleLabel(with: item.title)
+        setUpMessageLabel(with: item.message)
+        setUpValueLabel(with: item.value, tintColor: item.tintColour)
+    }
+}
+```
+
+Because we already have convenience methods in place to set the font and colour for the labels, we just have to pass in the text for each label and specify which label we want to apply the tint colour too. 
+
+This basically completes the setup for our detailed sub goal view. 
+
+Since we know we will have more then one use case we then go ahead  and create an enum for our different types with their associated types to setup the view accordingly: 
+```swift
+enum SubGoalType {
     case detailed(_ item: DetailedSubGoal)
-    case simple(_ item: SimpleSubGoal)
-}
-
-public struct DetailedSubGoal: DetailedSubGoalItem {
-    var title: String? 
-    var value: String?
-    var message: String?
-    var tintColour: UIColor?
-
-    public init(title: String, value: String, message: String, tintColour: UIColor) {
-        self.title = title
-        self.value = value
-        self.message = message
-        self.tintColour = tintColour
-    }
-}
-
-public struct SimpleSubGoal: SimpleSubGoalItem {
-    var title: String?
-    var icon: UIImage?
-
-    public init(title: String? = nil, icon: UIImage? = nil) {
-        self.title = title
-		  self.icon = icon
-    }
+	  // TODO: Add more types here
 }
 ```
 
-A factory will then match the type of cell with an appropriate view:
-`ModuleSubGoalItemViewFactory.swift`
+We also create a factory to handle the creation of the view for us based on the type:
+
 ```swift
 class ModuleSubGoalItemViewFactory {
     static func view(for subGoal: SubGoalType) -> UIView {
         switch subGoal {
         case .detailed(let item):
             return ModuleSubGoalItemViewFactory.detailedSubGoalView(with: item)
-        }
     }
 }
 
 private extension ModuleSubGoalItemViewFactory {
-    static func detailedSubGoalView(with item: DetailedSubGoal) -> UIView {
-        guard let view = ModuleDetailedSubGoalItemView.viewFromNib() else { return UIView() }
+    static func detailedSubGoalView(with item: TintableDetailedSubGoalItem) -> UIView {
+        guard let view = ModuleSubGoalItemView() else { return UIView() }
         view.setUp(with: item)
         return view
     }
 }
 ```
 
-So this might seem like we duplicated the code from our the before section, but we have managed to split out the subgoal item, so it can now be used on it’s own or with a more complicated setup, this somewhat adheres to the `Interface Segregation Principle` by splitting the software into multiple, independent parts. although `Interface Segregation Principle` mostly refers to interfaces I think it helps by simplifying this solution. 
-
-Secondly, if we need to add a new subgoal item that is very close to the detailed subogal item we don’t need to go and add a lot of if checks to hide certain labels, al we need to do is add the new type: 
-`SubGoalType.swift`
+We can then create a detailed subgoal view as follows: 
 ```swift
-public enum SubGoalType {
-    case detailed(_ item: DetailedSubGoalItem)
-    case simple(_ item: SimpleSubGoalItem)
-	  case notSoDetailed(_ item: NotSoDetailedGoal)
+let subGoalView =  ModuleSubGoalItemViewFactory.view(for: .detailed(DetailedSubGoal(title: "Detailed item",
+                                                                                    value: "9/10",
+                                                                                    message: "Some message",
+                                                                                    tintColour: .blue)))
+```
+
+#### Extending
+Now in the case we have another use case, let’s say a title and a message subgoal view, we just go ahead and create (or extend) a new implementation.
+First we create our abstraction: 
+```swift
+protocol TitleMessageSubGoalItem: TitleSubGoalItem, MessageSubGoalItem {}
+```
+
+Create the low level implementation:
+```swift
+struct TitleMessageSubGoal: TitleMessageSubGoalItem {
+	var title: String
+	var message: String
 }
+```
 
-// Here we create a struct that will only have valueso we care about, and when passing this to our resuable view the values we kept as nil will just stil hide. So effectively we created a new type, without modifying the view
-public struct NotSoDetailedGoal: DetailedSubGoalItem {
-    var title: String? 
-    var value: String?
-    var message: String?
-    var tintColour: UIColor?
-
-    public init(title: String, message: String, tintColour: UIColor) {
-        self.title = title
-        self.message = message
-        self.tintColour = tintColour
+Extend the subgoal view to cater for this type:
+```swift
+extension ModuleSubGoalItemView {
+    func setUp(with item: TitleMessageSubGoalItem) {
+        setUpTitleLabel(with: item.title)
+        setUpMessageLabel(with: item.message)
     }
 }
 ```
 
-And lastly we add this type to the factory:
-`ModuleSubGoalItemViewFactory.swift`
+Add the new type to the enum:
+```swift
+enum SubGoalType {
+    case detailed(_ item: DetailedSubGoal)
+    case titleMessage(_ item: TitleMessageSubGoal)
+}
+```
+
+And add the view creation to the factory:
 ```swift
 class ModuleSubGoalItemViewFactory {
     static func view(for subGoal: SubGoalType) -> UIView {
         switch subGoal {
         case .detailed(let item):
             return ModuleSubGoalItemViewFactory.detailedSubGoalView(with: item)
-		  case .simple(let item):
-            return ModuleSubGoalItemViewFactory.simpleSubGoalView(with: item)
-        case .notSoDetailed(let item):
-			  return ModuleSubGoalItemViewFactory.notSoDetailedSubGoalView(with: item)
-        }
+
+        case .titleMessage(let item):
+            return ModuleSubGoalItemViewFactory.titleMessageSubGoalView(with: item)
     }
 }
 
 private extension ModuleSubGoalItemViewFactory {
-    static func notSoDetailedSubGoalView(with item: NotSoDetailedGoal) -> UIView {
-        guard let view = ModuleDetailedSubGoalItemView.viewFromNib() else { return UIView() }
+    static func titleMessageSubGoalView(with item: TitleMessageSubGoal) -> UIView {
+        guard let view = ModuleSubGoalItemView.viewFromNib() else { return UIView() }
         view.setUp(with: item)
         return view
     }
 }
 ```
 
-In doing this we extend every time instead of modifying when need to add a new subgoal type that can reuse the detailed subgoal view. As a result adhering to the `Open-closed principle`
+And then use it: 
+```swift
+let subGoalView =  ModuleSubGoalItemViewFactory.view(for: .titleMessage(DetailedSubGoal(title: "Title message item",
+		                                                                                  message: "Some message")))
+```
 
-Lastly, if we add a new subgoal that is completely different from a detailed subgoal (lets imagine we are bringing buttons into the mix now that has to cater for action handlers etc…)  then we create a new view that caters for this type and map the subgoal type to the new view in the factory. 
-that way we adhere to the single responsibility principle and avoid modifying our detailed subgoal view. 
+#### Just for fun
+Let create a totally custom subgoal view that swaps things around a bit. 
+This type will reuse the `TintableDetailedSubGoalItem ` abstraction we created for the `DetailedSubGoal` but the view implementation will be a bit different: 
+
+```swift
+struct CustomDetailedSubGoal: TintableDetailedSubGoalItem {
+	var title: String
+	var value: String
+	var message: String
+	var tintColour: UIColor
+}
+```
+
+We extend our view to cater for this type but this time we don’t use the convenience methods for each label. We want more control so we setup each label from scratch, since this is a custom view: 
+```swift
+extension ModuleSubGoalItemView {
+    func customSetUp(with item: TintableDetailedSubGoalItem) {
+        setUpLabel(titleLabel, with: item.title, font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 15), tintColor: item.tintColour)
+        setUpLabel(messageLabel, with: item.message, font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 17))
+        setUpLabel(valueLabel, with: item.title, font: MEMAppearanceHandler.shared().semiBoldFont(withSize: 20))
+    }
+}
+```
+
+And finally we add the type to the list of available types: 
+```swift
+enum SubGoalType {
+    case detailed(_ item: DetailedSubGoal)
+    case titleMessage(_ item: TitleMessageSubGoal)
+    case custom(_ item: CustomDetailedSubGoal)
+}
+```
+
+And add the creation of the view in the factory:
+```swift
+class ModuleSubGoalItemViewFactory {
+    static func view(for subGoal: SubGoalType) -> UIView {
+        switch subGoal {
+        case .detailed(let item):
+            return ModuleSubGoalItemViewFactory.detailedSubGoalView(with: item)
+
+        case .titleMessage(let item):
+            return ModuleSubGoalItemViewFactory.titleMessageSubGoalView(with: item)
+
+        case .custom(let item):
+            return ModuleSubGoalItemViewFactory.customDetailedSubGoalView(with: item)
+        }
+    }
+}
+
+private extension ModuleSubGoalItemViewFactory {
+     static func customDetailedSubGoalView(with item: TintableDetailedSubGoalItem) -> UIView {
+        guard let view = ModuleSubGoalItemView.viewFromNib() else { return UIView() }
+        view.customSetUp(with: item) // use the customSetup instead
+        return view 
+    }
+}
+```
+
+And then use it: 
+```swift
+let subGoalView =  ModuleSubGoalItemViewFactory.view(for: .detailed(DetailedSubGoal(title: "Custom item",
+                                                                                    value: "9/10",
+                                                                                    message: "Some custom message",
+                                                                                    tintColour: .blue)))
+```
+
+
+### Summary
+In this example we did the following:
+1. We changed our sub goal view to only cater for one use case adhering to the `Single Responsibility Principle`
+2. We created and abstraction layer to the view to separate the lower level modules from the higher level modules (`Dependency Inversion Principle`)
+3. We segregated our interfaces so each implementation is not forced to implement properties it doesn’t care about (`Interface Segregation Principle`)
+4. We also made sure that as new use cases arrive we can extend the view rather than modifying it (`Open closed Principle`)

@@ -1,4 +1,4 @@
-# Open-closed / Dependency Inversion / Single Responsibility / Interface Segregation Example
+# Solid Subgoal View
 The `ModuleGoalWithSubGoalListTableViewCell` was built with two purposes in mind, being a goal cell header of some sorts and then catering for a subgoal list.
 you would typically pass in a response and it would figure out what type of subgoal list to show etc. 
 It would use `GoalListCardViewController` to house the subgoal list and then `GoalListContentView` would be the individual list items. 

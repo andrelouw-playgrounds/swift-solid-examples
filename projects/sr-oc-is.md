@@ -3,9 +3,10 @@ The `ModuleGoalWithSubGoalListTableViewCell` was built with two purposes in mind
 you would typically pass in a response and it would figure out what type of subgoal list to show etc. 
 It would use `GoalListCardViewController` to house the subgoal list and then `GoalListContentView` would be the individual list items. 
 A few problems encountered here was:
-1. `ModuleGoalWithSubGoalListTableViewCell` was trying to do too much, determining a goal header and subgoal list, resulting in multiple responsibilities (breaking single responsiability)
-2. There wasn’t an option to use the subgoal list on it’s own without having to go and create a new cell on its own, i.e. one was forced to deal with the goal header AND the subgoal list. With the subgoal list it also forced an interface where all implementations wasn’t always needed (Breaking the Interface Segregation Principle)
+1. `GoalListContentView` was trying to do too much, having to manage way to many components where we don't even use all of them ever together.(breaking single responsiability)
+2. One was forced to deal with all the component properties of the list content view, even if we don't need them. An interface is forcing us to implement all of the components in the view. (Breaking the Interface Segregation Principle)
 3. When a new sub goal item type was added another check had to be added to the `GoalListContentView` to hide or show labels or buttons depending on the use case. (Breaking the open closed principle because you had to go and modify the `GoalListContentView` class instead of extending it)
+4. There is no abstration (Breaking dependency inversion)
 
 ### Before code snippets:
 `ModuleGoalWithSubGoalListTableViewCell.swift`

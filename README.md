@@ -11,8 +11,4 @@ A collection of small examples to demonstrate the understanding of SOLID princip
 ## Project examples
 - [Dependency Inversion Example](projects/dependency-inversion.md)
 - [Single responsibility Example](projects/sigle-responsibility.md)
-- [Open-closed / Dependency Inversion / Single Responsibility / Interface Segregation Example](projects/sr-oc-is.md)
-
-
-
-
+- [Solid Subgoal View](projects/solidSubgoalView.md)

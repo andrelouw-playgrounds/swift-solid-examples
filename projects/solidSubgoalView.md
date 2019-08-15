@@ -1,8 +1,4 @@
 # Solid Subgoal View
-The `ModuleGoalWithSubGoalListTableViewCell` was built with two purposes in mind, being a goal cell header of some sorts and then catering for a subgoal list.
-you would typically pass in a response and it would figure out what type of subgoal list to show etc. 
-It would use `GoalListCardViewController` to house the subgoal list and then `GoalListContentView` would be the individual list items. 
-
 The `GoalListContentView` was built to cover a few scenarios. One would create a `GoalListItem` by passing in a subgoal response we get from the service. `GoalListItem` will then determine what type of goal list item to show based on type of response. 
 
 A few problems encountered here was:

@@ -12,4 +12,6 @@ A collection of small examples to demonstrate the understanding of SOLID princip
 - [Dependency Inversion Example](projects/dependency-inversion.md)
 - [Single responsibility Example](projects/sigle-responsibility.md)
 - [Solid Subgoal View](projects/solidSubgoalView.md)
-![Keynote](projects/solidSubgoalView.keynote)
+
+## Keynote
+- ![Solid subgoal view](projects/solidSubgoalView.key)

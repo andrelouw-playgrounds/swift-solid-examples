@@ -165,7 +165,7 @@ For now we don’t include a method to setup the view as a whole, but rather set
 
 ```swift
 class ModuleSubGoalView: UIView {
-    // By default all outlets are set to hidden, have to be explicitly unhide them
+    // By default all outlets are set to hidden, have to explicitly unhide them
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var valueLabel: UILabel!
     @IBOutlet weak var messageLabel: UILabel!

@@ -294,15 +294,15 @@ enum SubgoalType {
 We also create a factory to handle the creation of the view for us based on the type:
 
 ```swift
-class ModuleSubGoalViewFactory {
+class ModuleSubgoalItemViewFactory {
     static func view(for Subgoal: SubgoalType) -> UIView {
         switch Subgoal {
         case .detailed(let item):
-            return ModuleSubGoalViewFactory.detailedSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.detailedSubgoalView(with: item)
     }
 }
 
-private extension ModuleSubGoalViewFactory {
+private extension ModuleSubgoalItemViewFactory {
     static func detailedSubgoalView(with item: TintableDetailedSubgoalItem) -> UIView {
         guard let view = ModuleSubGoalView() else { return UIView() }
         view.setUp(with: item)
@@ -313,7 +313,7 @@ private extension ModuleSubGoalViewFactory {
 
 We can then create a detailed subgoal view as follows: 
 ```swift
-let subgoalView =  ModuleSubGoalViewFactory.view(for: .detailed(DetailedSubgoal(title: "Detailed item",
+let subgoalView =  ModuleSubgoalItemViewFactory.view(for: .detailed(DetailedSubgoal(title: "Detailed item",
                                                                                 value: "9/10",
                                                                                 message: "Some message",
                                                                                 tintColour: .blue)))
@@ -354,18 +354,18 @@ enum SubgoalType {
 
 And add the view creation to the factory:
 ```swift
-class ModuleSubGoalViewFactory {
+class ModuleSubgoalItemViewFactory {
     static func view(for Subgoal: SubgoalType) -> UIView {
         switch subGoal {
         case .detailed(let item):
-            return ModuleSubGoalViewFactory.detailedSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.detailedSubgoalView(with: item)
 
         case .titleMessage(let item):
-            return ModuleSubGoalViewFactory.titleMessageSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.titleMessageSubgoalView(with: item)
     }
 }
 
-private extension ModuleSubGoalViewFactory {
+private extension ModuleSubgoalItemViewFactory {
     static func titleMessageSubgoalView(with item: TitleMessageSubgoal) -> UIView {
         guard let view = ModuleSubGoalView.viewFromNib() else { return UIView() }
         view.setUp(with: item)
@@ -376,7 +376,7 @@ private extension ModuleSubGoalViewFactory {
 
 And then use it: 
 ```swift
-let subGoalView =  ModuleSubGoalViewFactory.view(for: .titleMessage(TitleMessageSubgoal(title: "Title message item",
+let subGoalView =  ModuleSubgoalItemViewFactory.view(for: .titleMessage(TitleMessageSubgoal(title: "Title message item",
 		                                                                                   message: "Some message")))
 ```
 
@@ -410,21 +410,21 @@ enum SubgoalType {
 
 Add the view creation to the factory:
 ```swift
-class ModuleSubGoalViewFactory {
+class ModuleSubgoalItemViewFactory {
     static func view(for Subgoal: SubgoalType) -> UIView {
         switch subGoal {
         case .detailed(let item):
-            return ModuleSubGoalViewFactory.detailedSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.detailedSubgoalView(with: item)
 
         case .titleMessage(let item):
-            return ModuleSubGoalViewFactory.titleMessageSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.titleMessageSubgoalView(with: item)
 
 		 case .title(let item):
-            return ModuleSubGoalViewFactory.titleSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.titleSubgoalView(with: item)
     }
 }
 
-private extension ModuleSubGoalViewFactory {
+private extension ModuleSubgoalItemViewFactory {
     static func titleSubgoalView(with item: TitleSubgoal) -> UIView {
         guard let view = ModuleSubGoalView.viewFromNib() else { return UIView() }
         view.setUp(with: item)
@@ -435,7 +435,7 @@ private extension ModuleSubGoalViewFactory {
 
 And then use it: 
 ```swift
-let subGoalView =  ModuleSubGoalViewFactory.view(for: .title(TitleSubgoal(title: "Title message item")))
+let subGoalView =  ModuleSubgoalItemViewFactory.view(for: .title(TitleSubgoal(title: "Title message item")))
 ```
 
 
@@ -475,25 +475,25 @@ enum SubgoalType {
 
 We add the creation of the view in the factory, and for the creation of the view we specify our `customSetUp` method instead of the default `setUp` one:
 ```swift
-class ModuleSubGoalViewFactory {
+class ModuleSubgoalItemViewFactory {
     static func view(for subgoal: SubgoalType) -> UIView {
         switch subgoal {
         case .detailed(let item):
-            return ModuleSubGoalViewFactory.detailedSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.detailedSubgoalView(with: item)
 
         case .titleMessage(let item):
-            return ModuleSubGoalViewFactory.titleMessageSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.titleMessageSubgoalView(with: item)
 
  		  case .title(let item):
-            return ModuleSubGoalViewFactory.titleSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.titleSubgoalView(with: item)
 
         case .custom(let item):
-            return ModuleSubGoalViewFactory.customDetailedSubgoalView(with: item)
+            return ModuleSubgoalItemViewFactory.customDetailedSubgoalView(with: item)
         }
     }
 }
 
-private extension ModuleSubGoalViewFactory {
+private extension ModuleSubgoalItemViewFactory {
      static func customDetailedSubgoalView(with item: TintableDetailedSubgoalItem) -> UIView {
         guard let view = ModuleSubGoalView.viewFromNib() else { return UIView() }
         view.customSetUp(with: item) // use the customSetup instead
@@ -504,7 +504,7 @@ private extension ModuleSubGoalViewFactory {
 
 And then use it: 
 ```swift
-let subgoalView =  ModuleSubGoalViewFactory.view(for: .detailed(DetailedSubgoal(title: "Custom item",
+let subgoalView =  ModuleSubgoalItemViewFactory.view(for: .detailed(DetailedSubgoal(title: "Custom item",
                                                                                 value: "9/10",
                                                                                 message: "Some custom message",
                                                                                 tintColour: .blue)))

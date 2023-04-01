@@ -14,4 +14,4 @@ A collection of small examples to demonstrate the understanding of SOLID princip
 - [Solid Subgoal View](projects/solidSubgoalView.md)
 
 ## Keynote
-- ![Solid subgoal view](projects/solidSubgoalView.key)
+- [Solid subgoal view](projects/solidSubgoalView.key)
